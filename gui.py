@@ -34,42 +34,5 @@ def on_return(event):
 # Event-Listener hinzufügen
 entry.bind('<Return>', on_return)
 
-# # Dropdown-Menü-Komponente
-# option_var = tk.StringVar()
-# option_menu = tk.OptionMenu(root, option_var, "Optionen", "Vorname", "Nachname", "Alter", "Geburtsdatum", "Sterbedatum", "Geschlecht", "Geburtsland", "Beruf")
-# option_menu.pack()
-
-# # Funktion, um die ausgewählten Optionen zu lesen
-# def check():
-#     options = []
-#     for i in range(1,9):
-#         if vars()[f"cb{i}"].get() == 1:
-#             options.append(option_menu["menu"].entrycget(i, "label"))
-#     print(f"Ausgewählte Optionen: {options}")
-
-# # Schalter-Optionen für das Dropdown-Menü
-# cb1 = tk.IntVar()
-# cb2 = tk.IntVar()
-# cb3 = tk.IntVar()
-# cb4 = tk.IntVar()
-# cb5 = tk.IntVar()
-# cb6 = tk.IntVar()
-# cb7 = tk.IntVar()
-# cb8 = tk.IntVar()
-
-# option_menu["menu"].add_separator()
-# option_menu["menu"].add_checkbutton(label="Vorname", variable=cb1, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Nachname", variable=cb2, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Alter", variable=cb3, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Geburtsdatum", variable=cb4, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Sterbedatum", variable=cb5, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Geschlecht", variable=cb6, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Geburtsland", variable=cb7, onvalue=1, offvalue=0, command=check)
-# option_menu["menu"].add_checkbutton(label="Beruf", variable=cb8, onvalue=1, offvalue=0, command=check)
-
-# # Button-Komponente
-# button = tk.Button(root, text="Aktion", command=check)
-# button.pack(pady=20)
-
 
 root.mainloop()
