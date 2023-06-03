@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 root = tk.Tk()
-
+bundesdata = bt.Bundesdata('backend/MDB_STAMMDATEN.xml')
 # Konfiguration des Fensters
 root.title("Suchbegriff eingeben")
 root.geometry("600x400")
@@ -20,13 +20,18 @@ entry.pack(ipady=10)
 # Funktion, um die Eingabe zu lesen und eine Nachrichtbox anzuzeigen
 def search():
     search_term = entry.get()
-    messagebox.showinfo("Suche gestartet", f"Gefunden: {bt.anzahl_von('MDB_STAMMDATEN.xml', search_term)}")
-    messagebox.showinfo("Suche gestartet", f"Gefunden: \n{bt.abge_name_list('MDB_STAMMDATEN.xml', search_term)}")
+    messagebox.showinfo("Suche gestartet", f"Gefunden: {bundesdata.suche_anzahl(search_term)}")
+    messagebox.showinfo("Suche gestartet", f"Gefunden: \n{bundesdata.suche_data_list(search_term)}")
 #To do
 # Button-Komponente
 button = tk.Button(root, text="Suche starten", font=("Helvetica", 14), bg="#333333", fg="#FFFFFF", command=search)
 button.pack(pady=20)
 
+#TODO Check buttons
+switch_alter = tk.Checkbutton(root)
+switch_partei = tk.Checkbutton(root)
+switch_alter.pack(pady=10)
+switch_partei.pack(pady=10)
 # Event-Listener für das Return-Ereignis
 def on_return(event):
     search()
