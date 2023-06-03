@@ -20,8 +20,10 @@ entry.pack(ipady=10)
 # Funktion, um die Eingabe zu lesen und eine Nachrichtbox anzuzeigen
 def search():
     search_term = entry.get()
-    messagebox.showinfo("Suche gestartet", f"Gefunden: {bundesdata.suche_anzahl(search_term)}")
-    messagebox.showinfo("Suche gestartet", f"Gefunden: \n{bundesdata.suche_data_list(search_term)}")
+    messagebox.showinfo("Ergebnis", f"{bundesdata.suche_anzahl(search_term)}")
+    messagebox.showinfo("Ergebnis", f"\n{bundesdata.suche_data_list(search_term)}")
+    messagebox.showinfo("Ergebnis", f"\n{bundesdata.suche_grouped(search_term)}")
+
 #To do
 # Button-Komponente
 button = tk.Button(root, text="Suche starten", font=("Helvetica", 14), bg="#333333", fg="#FFFFFF", command=search)

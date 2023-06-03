@@ -12,7 +12,8 @@ class Bundesdata:
     self.df_bt = df[df['WP_NR'].apply(lambda x: True if wp in x else False)][wanted_data]
     self.df_bt.dropna(inplace=True, subset="VITA_KURZ")
     self.df_bt['ALTER'] = self.df_bt.apply(lambda x: (datetime.now() - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25 if pd.isnull(x['STERBEDATUM']) else (pd.to_datetime(pd.Timestamp(x['STERBEDATUM']), format='%d.%m.%Y') - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25, axis=1)
-    
+    self.anzahl_mitglieder = self.df_bt.groupby('PARTEI_KURZ').size().reset_index(name='ANZAHL_MITGLIEDER_GESAMT')
+  
   def suche_anzahl(self, suche_nach):
     count = self.df_bt.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')["VITA_KURZ"].count()
     return count if count > 0 else "Es gibt keine" 
@@ -39,6 +40,14 @@ class Bundesdata:
     if beruf:
       columns.append("BERUF")
     return result[columns].to_string(index=False, header=False) if result.empty == False else "Es gibt Keine"
+  
+  def suche_grouped(self, suche_nach, group='PARTEI_KURZ'):
+    query = self.df_bt.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')
+    group = query.groupby('PARTEI_KURZ').size().reset_index(name='ANZAHL_MITGLIEDER_SUCHE')
+    group['ANTEIL_SUCHE_PARTEI'] = round(group['ANZAHL_MITGLIEDER_SUCHE'] / self.anzahl_mitglieder['ANZAHL_MITGLIEDER_GESAMT'],3)*+100
+    result = pd.merge(group, self.anzahl_mitglieder, on='PARTEI_KURZ', how='left')
+    return result[['PARTEI_KURZ', 'ANTEIL_SUCHE_PARTEI']].to_string(index=False, header=False) if not result.empty else "Es gibt Keine"
+
 
 def load_mdb_data(xml_file):
     tree = ET.parse(xml_file)
@@ -46,7 +55,7 @@ def load_mdb_data(xml_file):
     mdb_data = [extract_mdb_data(mdb) for mdb in root.findall('MDB')]
     df = pd.DataFrame(mdb_data)
     return df
-  
+
 def extract_mdb_data(mdb):
     data = {}
     namen = mdb.find('NAMEN')
@@ -82,10 +91,3 @@ def get_bundestag(xml_file, wp="20"):
     aktuell_bt.dropna(inplace=True, subset="VITA_KURZ")
     aktuell_bt['ALTER'] = aktuell_bt.apply(lambda x: (datetime.now() - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25 if pd.isnull(x['STERBEDATUM']) else (pd.to_datetime(pd.Timestamp(x['STERBEDATUM']), format='%d.%m.%Y') - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25, axis=1)
     return aktuell_bt
-
-def abge_order_by(xml_file, suche_nach, wp="20"):
-    bt_wp = get_bundestag(xml_file, wp)
-    query = bt_wp.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')[['VORNAME', 'NACHNAME', 'PARTEI_KURZ']]
-    qroup = query.groupby('PARTEI_KURZ').size().reset_index(name='Anzahl_der_Parteimitglieder')
-    result = qroup #TODO Auf wieviel Prozent der Parteimitglieder trifft die query zu?
-    return result.to_string(index=False, header=False) if result.empty == False else "Es gibt Keine"
