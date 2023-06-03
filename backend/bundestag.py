@@ -83,38 +83,9 @@ def get_bundestag(xml_file, wp="20"):
     aktuell_bt['ALTER'] = aktuell_bt.apply(lambda x: (datetime.now() - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25 if pd.isnull(x['STERBEDATUM']) else (pd.to_datetime(pd.Timestamp(x['STERBEDATUM']), format='%d.%m.%Y') - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25, axis=1)
     return aktuell_bt
 
-# def anzahl_von(xml_file, suche_nach, wp="20") -> int:
-#     bt_wp = get_bundestag(xml_file, wp) 
-#     count = bt_wp.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')["VITA_KURZ"].count()
-#     return count if count > 0 else "Es gibt Keine"
-
 def abge_order_by(xml_file, suche_nach, wp="20"):
     bt_wp = get_bundestag(xml_file, wp)
     query = bt_wp.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')[['VORNAME', 'NACHNAME', 'PARTEI_KURZ']]
     qroup = query.groupby('PARTEI_KURZ').size().reset_index(name='Anzahl_der_Parteimitglieder')
     result = qroup #TODO Auf wieviel Prozent der Parteimitglieder trifft die query zu?
     return result.to_string(index=False, header=False) if result.empty == False else "Es gibt Keine"
-
-def abge_name_list(xml_file, suche_nach, wp="20", alter=False, vorname=True, partei=True, nachname=True, gedatum=False, sterbdatum=False, geschlecht=False, geburtsland=False, beruf=False):
-    bt_wp = get_bundestag(xml_file, wp) 
-    result = bt_wp.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')
-    columns = []
-    if vorname:
-      columns.append("VORNAME")
-    if nachname: 
-      columns.append("NACHNAME")
-    if partei:
-      columns.append("PARTEI_KURZ")
-    if alter:
-      columns.append("ALTER")
-    if gedatum:
-      columns.append("GEBURTSDATUM")
-    if sterbdatum:
-      columns.append("STERBEDATUM")
-    if geschlecht:
-      columns.append("GESCHLECHT")
-    if geburtsland:
-      columns.append("GEBURTSLAND")
-    if beruf:
-      columns.append("BERUF")
-    return result[columns].to_string(index=False, header=False) if result.empty == False else "Es gibt Keine"
