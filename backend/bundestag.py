@@ -7,13 +7,14 @@ from datetime import datetime
 
 class Bundesdata:
   def __init__(self, xml_file, wp="20") -> None:
-    df = load_mdb_data(xml_file)
-    wanted_data = ['VORNAME', 'NACHNAME', 'VITA_KURZ', 'PARTEI_KURZ', 'GEBURTSDATUM', 'STERBEDATUM', 'GESCHLECHT', 'GEBURTSLAND','BERUF']
-    self.df_bt = df[df['WP_NR'].apply(lambda x: True if wp in x else False)][wanted_data]
-    self.df_bt.dropna(inplace=True, subset="VITA_KURZ")
-    self.df_bt['ALTER'] = self.df_bt.apply(lambda x: (datetime.now() - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25 if pd.isnull(x['STERBEDATUM']) else (pd.to_datetime(pd.Timestamp(x['STERBEDATUM']), format='%d.%m.%Y') - pd.to_datetime(x['GEBURTSDATUM'], format='%d.%m.%Y')).days / 365.25, axis=1)
-    self.anzahl_mitglieder = self.df_bt.groupby('PARTEI_KURZ').size().reset_index(name='ANZAHL_MITGLIEDER_GESAMT')
+    self.xml_file = xml_file  
+    self.df_bt= get_bundestag(xml_file, wp)
+    self.anzahl_mitglieder = self.df_bt.groupby('PARTEI_KURZ').agg(ANZAHL_MITGLIEDER_PARTEI=('PARTEI_KURZ', 'size')).reset_index()
   
+  def change_wp(self, wps):
+      self.df_bt = get_bundestag(self.xml_file, wp=wps)
+      self.anzahl_mitglieder = self.df_bt.groupby('PARTEI_KURZ').agg(ANZAHL_MITGLIEDER_PARTEI=('PARTEI_KURZ', 'size')).reset_index()
+    
   def suche_anzahl(self, suche_nach):
     count = self.df_bt.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')["VITA_KURZ"].count()
     return count if count > 0 else "Es gibt keine" 
@@ -41,12 +42,13 @@ class Bundesdata:
       columns.append("BERUF")
     return result[columns].to_string(index=False, header=False) if result.empty == False else "Es gibt Keine"
   
-  def suche_grouped(self, suche_nach, group='PARTEI_KURZ'):
-    query = self.df_bt.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')
-    group = query.groupby('PARTEI_KURZ').size().reset_index(name='ANZAHL_MITGLIEDER_SUCHE')
-    group['ANTEIL_SUCHE_PARTEI'] = round(group['ANZAHL_MITGLIEDER_SUCHE'] / self.anzahl_mitglieder['ANZAHL_MITGLIEDER_GESAMT'],3)*+100
-    result = pd.merge(group, self.anzahl_mitglieder, on='PARTEI_KURZ', how='left')
-    return result[['PARTEI_KURZ', 'ANTEIL_SUCHE_PARTEI']].to_string(index=False, header=False) if not result.empty else "Es gibt Keine"
+  def suche_grouped(self, suche_nach):
+      query = self.df_bt.query(f'VITA_KURZ.str.contains("{suche_nach}")', engine='python')
+      result = query.groupby('PARTEI_KURZ').size().reset_index(name='ANZAHL_MITGLIEDER_SUCHE')
+      result = pd.DataFrame.merge(self.anzahl_mitglieder[['PARTEI_KURZ', 'ANZAHL_MITGLIEDER_PARTEI']], result, on='PARTEI_KURZ', how='left')
+      result['ANTEIL'] = round(result['ANZAHL_MITGLIEDER_SUCHE'] / result['ANZAHL_MITGLIEDER_PARTEI'],3)
+      result.sort_values(by='ANTEIL',inplace=True, ascending=False)
+      return result[['PARTEI_KURZ','ANTEIL']].to_string(index=False, header=True)#result[['PARTEI_KURZ', 'ANTEIL_SUCHE_PARTEI']].to_string(index=False, header=False) if not result.empty else "Es gibt Keine"
 
 
 def load_mdb_data(xml_file):
@@ -54,6 +56,7 @@ def load_mdb_data(xml_file):
     root = tree.getroot()
     mdb_data = [extract_mdb_data(mdb) for mdb in root.findall('MDB')]
     df = pd.DataFrame(mdb_data)
+    print(df.info())
     return df
 
 def extract_mdb_data(mdb):
@@ -84,7 +87,7 @@ def extract_mdb_data(mdb):
                  'WP_NR': wp_list})
     return data
   
-def get_bundestag(xml_file, wp="20"):  
+def get_bundestag(xml_file, wp):  
     df = load_mdb_data(xml_file)
     wanted_data = ['VORNAME', 'NACHNAME', 'VITA_KURZ', 'PARTEI_KURZ', 'GEBURTSDATUM', 'STERBEDATUM', 'GESCHLECHT', 'GEBURTSLAND','BERUF']
     aktuell_bt = df[df['WP_NR'].apply(lambda x: True if wp in x else False)][wanted_data]
